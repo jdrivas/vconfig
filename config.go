@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	appName = "application"
+	AppName = "application"
 )
 
 var (
@@ -38,16 +38,6 @@ const (
 	VerboseFlagKey = "verbose"
 	DebugFlagKey   = "debug"
 )
-
-// SetAppName the name of the applicaiton
-func SetAppName(an string) {
-	appName = an
-}
-
-// Return the name of the applicaiton
-func GetAppName() {
-	return appName
-}
 
 // InitConfig reads in config file and ENV variables if set.
 func InitConfig() {
