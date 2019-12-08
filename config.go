@@ -26,10 +26,8 @@ var (
 
 // YAML Variables which show up in viper, but managed here.
 const (
-	DebugKey         = "debug"         // bool
-	VerboseKey       = "verbose"       // bool
-	ScreenProfileKey = "screenProfile" // string
-	ScreenDarkValue  = "dark"
+	DebugKey   = "debug"   // bool
+	VerboseKey = "verbose" // bool
 )
 
 // Flags These are the long form flag values for command line flags.
