@@ -14,8 +14,8 @@ var (
 
 var (
 	ConfigFileName string
-	ConfigFileRoot = fmt.Sprintf("%s", AppName)
-	HistoryFile    = fmt.Sprintf(".%s_history", AppName)
+	ConfigFileRoot string
+	HistoryFile    string
 )
 
 /*
@@ -43,6 +43,13 @@ const (
 func InitConfig() {
 
 	// fmt.Printf("%s\n", t.Title("InitConfig")) // Can't bracket with util.Debug as Debug uses config.
+	if ConfigFileRoot == "" {
+		ConfigFileRoot = fmt.Sprintf("%s", AppName)
+	}
+
+	if HistoryFile == "" {
+		HistoryFile = fmt.Sprintf(".%s_history", AppName)
+	}
 
 	// Fin a config file
 	if ConfigFileName != "" {
