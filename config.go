@@ -18,25 +18,6 @@ var (
 	HistoryFile    string
 )
 
-/*
-* Keys to look up values in Viper configuration.
- */
-
-// TODO: Formalize the yaml file structure, or at least document it here.
-
-// YAML Variables which show up in viper, but managed here.
-const (
-	DebugKey   = "debug"   // bool
-	VerboseKey = "verbose" // bool
-)
-
-// Flags These are the long form flag values for command line flags.
-const (
-	ConfigFlagKey  = "config"
-	VerboseFlagKey = "verbose"
-	DebugFlagKey   = "debug"
-)
-
 // InitConfig reads in config file and ENV variables if set.
 func InitConfig() {
 
