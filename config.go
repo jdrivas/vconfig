@@ -21,7 +21,11 @@ var (
 // InitConfig reads in config file and ENV variables if set.
 func InitConfig() {
 
-	// fmt.Printf("%s\n", t.Title("InitConfig")) // Can't bracket with util.Debug as Debug uses config.
+	if Debug() {
+		pef() 
+		defer pxf()
+	}
+
 	if ConfigFileRoot == "" {
 		ConfigFileRoot = fmt.Sprintf("%s", AppName)
 	}
@@ -30,7 +34,7 @@ func InitConfig() {
 		HistoryFile = fmt.Sprintf(".%s_history", AppName)
 	}
 
-	// Fin a config file
+	// Find a config file
 	if ConfigFileName != "" {
 		viper.SetConfigFile(ConfigFileName)
 	} else {
@@ -58,7 +62,5 @@ func InitConfig() {
 	} else {
 		fmt.Printf("Error loading config file: %s - %v\n", viper.ConfigFileUsed(), err)
 	}
-
-	// fmt.Printf("%s\n", t.Title("InitConfig - exit"))
 
 }

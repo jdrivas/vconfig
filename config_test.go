@@ -8,11 +8,16 @@ import (
 func Test_Debug(t *testing.T) {
 	SetDebug(true)
 	if !Debug() {
-		t.Errorf("Debut not set and should be.")
+		t.Errorf("Debug not set and should be.")
+	}
+
+	ToggleDebug()
+	if Debug() {
+		t.Error("Debug is set and should have toggled off.")
 	}
 }
 
-func Test_AppNAme(t *testing.T) {
+func Test_AppName(t *testing.T) {
 	testAppName := "TestApp"
 	AppName = testAppName
 	InitConfig()
