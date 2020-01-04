@@ -17,10 +17,3 @@ const (
 	DebugKey   = "debug"   // bool
 	VerboseKey = "verbose" // bool
 )
-
-// Flags These are the long form flag values for command line flags.
-const (
-	ConfigFlagKey  = "config"
-	VerboseFlagKey = "verbose"
-	DebugFlagKey   = "debug"
-)
