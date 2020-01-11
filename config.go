@@ -22,7 +22,7 @@ var (
 func InitConfig() {
 
 	if Debug() {
-		pef() 
+		pef()
 		defer pxf()
 	}
 
