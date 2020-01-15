@@ -1,3 +1,4 @@
+// TODO(jdr) This is a mess. Should clean up and refactor to make easier to add tests.
 package vconfig
 
 import (
@@ -56,6 +57,12 @@ var f2 = flag{
 
 var s2 = set{key: "screen", value: "darkScreen"}
 
+// Reset envrionment before testing.
+func reset() {
+	ResetBindings()
+	viper.Reset()
+}
+
 // Create an argument list for parsing from an array of flags.
 func argsFromFlags(app string, flags []flag) (args []string) {
 	args = append(args, app)
@@ -74,6 +81,7 @@ func registerAndBindFlags(flags []flag, pflags *pflag.FlagSet) {
 
 }
 
+// This proxies for UpdateChangedFlags.
 // After parse, get the values that have changed from a flag set and
 // set the bind value to flag value from the parse.
 func getChangedValues(flags []flag, pflags *pflag.FlagSet, t *testing.T) {
@@ -114,7 +122,7 @@ func TestPflag(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		ResetBindings()
+		reset()
 		t.Run(c.name, func(t *testing.T) {
 			pflags := pflag.NewFlagSet(c.name, pflag.PanicOnError)
 			registerAndBindFlags(c.flags, pflags)
@@ -156,7 +164,7 @@ func TestParseWithBind(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		ResetBindings() // reset the bind map.
+		reset() // reset the bind map.
 		t.Run(c.name, func(t *testing.T) {
 
 			// Setup
@@ -249,8 +257,7 @@ func TestBindSet(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		ResetBindings()
-		viper.Reset()
+		reset()
 		pflags := pflag.NewFlagSet(c.name, pflag.PanicOnError)
 		registerAndBindFlags(c.flags, pflags)
 		pflags.Parse(c.args[1:])
@@ -304,7 +311,7 @@ func TestApply(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		ResetBindings()
+		reset()
 		viper.Reset()
 		pflags := pflag.NewFlagSet(c.name, pflag.PanicOnError)
 		registerAndBindFlags(c.flags, pflags)
@@ -346,7 +353,7 @@ func TestApplySpecial(t *testing.T) {
 	flags := []flag{f1, f2}
 	set := s1
 
-	ResetBindings()
+	reset()
 
 	pflags := pflag.NewFlagSet("ApplySpecial", pflag.PanicOnError)
 	registerAndBindFlags(flags, pflags)
@@ -392,7 +399,7 @@ func TestGet(t *testing.T) {
 	flags := []flag{f1, f2}
 
 	// Setup
-	ResetBindings()
+	reset()
 
 	pflags := pflag.NewFlagSet("ApplySpecial", pflag.PanicOnError)
 	registerAndBindFlags(flags, pflags)
@@ -421,7 +428,7 @@ func TestGet(t *testing.T) {
 
 }
 
-func TestBindDebug(t *testing.T) {
+func TestBindVerbose(t *testing.T) {
 	type bflag struct {
 		bk, fk, fks, fh, fv string
 		fd                  bool
@@ -429,16 +436,16 @@ func TestBindDebug(t *testing.T) {
 	}
 
 	f := bflag{
-		bk:  DebugKey,                   // binding key
-		fk:  DebugKey,                   // flag key
-		fks: "d",                        // short flag key
-		fv:  "",                         // flag value
-		fd:  false,                      // flag default value
-		fh:  "help message about debug", // help message
+		bk:  VerboseKey,                   // binding key
+		fk:  VerboseKey,                   // flag key
+		fks: "v",                          // short flag key
+		fv:  "",                           // flag value
+		fd:  false,                        // flag default value
+		fh:  "help message about verbose", // help message
 	}
 
 	// Setup
-	ResetBindings()
+	reset()
 
 	pflags := pflag.NewFlagSet("ApplySpecial", pflag.PanicOnError)
 	f.fVar = pflags.Bool(f.fk, f.fd, f.fh)
@@ -450,38 +457,38 @@ func TestBindDebug(t *testing.T) {
 	bfs := GetBindFlags()
 	for _, bf := range bfs {
 		if bf.Flag.Changed {
-			bf.SetValueFrom(bf.Flag)
+			bf.setValueFrom(bf.Flag)
 		}
 	}
 
 	// Now Apply to Viper.
 	Apply()
 
-	if Debug() != true {
-		t.Errorf("Debug should have been set by flag.")
+	if Verbose() != true {
+		t.Errorf("Verbose should have been set by flag.")
 	}
 
-	ToggleDebug()
+	ToggleVerbose()
 
-	if Debug() != false {
-		t.Errorf("Debug should have been reset by flag.")
+	if Verbose() != false {
+		t.Errorf("Verbose should have been reset by flag.")
 	}
 
 }
 
-func TestBindDebugFirstInteractive(t *testing.T) {
+func TestBindVerboseFirstInteractive(t *testing.T) {
 
 	f := bflag{
-		bk:  DebugKey,                   // binding key
-		fk:  DebugKey,                   // flag key
-		fks: "d",                        // short flag key
-		fv:  "",                         // flag value
-		fd:  false,                      // flag default value
-		fh:  "help message about debug", // help message
+		bk:  VerboseKey,                   // binding key
+		fk:  VerboseKey,                   // flag key
+		fks: "v",                          // short flag key
+		fv:  "",                           // flag value
+		fd:  false,                        // flag default value
+		fh:  "help message about verbose", // help message
 	}
 
 	// Setup
-	ResetBindings()
+	reset()
 
 	pflags := pflag.NewFlagSet("ApplySpecial", pflag.PanicOnError)
 
@@ -495,7 +502,7 @@ func TestBindDebugFirstInteractive(t *testing.T) {
 	bfs := GetBindFlags()
 	for _, bf := range bfs {
 		if bf.Flag.Changed {
-			bf.SetValueFrom(bf.Flag)
+			bf.setValueFrom(bf.Flag)
 		}
 	}
 
@@ -503,14 +510,14 @@ func TestBindDebugFirstInteractive(t *testing.T) {
 	Apply()
 
 	// Test
-	if Debug() != true {
-		t.Errorf("Debug should have been set by flag.")
+	if Verbose() != true {
+		t.Errorf("Verbose should have been set by flag.")
 	}
 
-	ToggleDebug()
+	ToggleVerbose()
 
-	if Debug() != false {
-		t.Errorf("Debug should have been reset by flag.")
+	if Verbose() != false {
+		t.Errorf("Verbose should have been reset by flag.")
 	}
 
 	// Interactive Command line: THE FLAG SHOULD NOT BE DURABLE.
@@ -529,17 +536,17 @@ func TestBindDebugFirstInteractive(t *testing.T) {
 	})
 
 	if visit == false {
-		t.Errorf("Never visited the debug flag after second parse.")
+		t.Errorf("Never visited the verbose flag after second parse.")
 	}
 
-	if Debug() != true {
-		t.Errorf("Debug false, expected true after second parse.")
+	if Verbose() != true {
+		t.Errorf("verbose false, expected true after second parse.")
 	}
 
 	Apply()
 
-	if Debug() != false {
-		t.Errorf("Debug true, should be calse after second parse and apply.")
+	if Verbose() != false {
+		t.Errorf("verbose true, should be calse after second parse and apply.")
 	}
 
 }
@@ -550,7 +557,7 @@ func TestMultipleBindsCmdLineFlag(t *testing.T) {
 	flags := []flag{f1}
 
 	// Setup
-	ResetBindings()
+	reset()
 
 	pflags := pflag.NewFlagSet("ApplySpecial", pflag.PanicOnError)
 	registerAndBindFlags(flags, pflags)
@@ -561,7 +568,7 @@ func TestMultipleBindsCmdLineFlag(t *testing.T) {
 	// Simulate keeping values from the app commandline.
 	for _, bf := range GetBindFlags() {
 		if bf.Flag.Changed {
-			bf.SetValueFrom(bf.Flag)
+			bf.setValueFrom(bf.Flag)
 		}
 	}
 
@@ -592,39 +599,45 @@ func TestMultipleBindsCmdLineFlag(t *testing.T) {
 
 }
 func TestMultipleBindsInteractiveLineFlag(t *testing.T) {
-	SetDebug(true)
+	// SetDebug(true)
 	// Configure
 	flags := []flag{f1}
+	flagKey := f1.fk
+	bindKey := f1.bk
 
 	// Setup
-	ResetBindings()
+	reset()
+	if len(bbm) > 0 || len(bfm) > 0 {
+		t.Errorf("ResetBindings didn't empty the BindMaps")
+	}
 
-	pflags := pflag.NewFlagSet("ApplySpecial", pflag.PanicOnError)
+	pflags := pflag.NewFlagSet("MultipleBindsInteractiveLineFlag", pflag.PanicOnError)
 	registerAndBindFlags(flags, pflags)
 
 	// args := argsFromFlags("app", flags)
-	args := []string{"app"}
+	args := []string{"app"} // No flag set.
 	pflags.Parse(args[1:])
 
 	// Simulate keeping values from the app commandline.
 	for _, bf := range GetBindFlags() {
 		if bf.Flag.Changed {
-			bf.SetValueFrom(bf.Flag)
+			t.Error("Flag should not have been marked changed.")
+			// bf.SetValueFrom(bf.Flag)
 		}
 	}
 
 	Apply()
 
-	pflags = pflag.NewFlagSet("NewFlags", pflag.PanicOnError)
+	pflags = pflag.NewFlagSet("MultipleBindsInteractiveLineFlag-NewFlags", pflag.PanicOnError)
 	registerAndBindFlags(flags, pflags)
 
 	// Interactive command line
 	argValue := "unique-test-file"
-	args = []string{"--" + f1.fk, argValue}
+	args = []string{"--" + flagKey, argValue}
 	pflags.Parse(args)
 
 	ApplyFromFlags(pflags)
-	v := viper.GetString(f1.bk)
+	v := viper.GetString(bindKey)
 	if v != argValue {
 		t.Errorf("failed to set new argvalue from command line. Got: %#v, Expected: %#v",
 			v, argValue)
@@ -633,10 +646,172 @@ func TestMultipleBindsInteractiveLineFlag(t *testing.T) {
 	Apply()
 
 	// In this case it should be empty as we had no command line value.
-	v = viper.GetString(f1.bk)
+	v = viper.GetString(bindKey)
 	if v != "" {
 		t.Errorf("failed to set new argvalue from command line. Got: %#v, Expected: %#v",
 			v, "")
 	}
 
+}
+
+func TestUpdateChangedFlags(t *testing.T) {
+
+	type tc struct {
+		name  string
+		flags []flag
+		args  []string
+	}
+
+	cases := []tc{
+		{name: "one flag with var", flags: []flag{f1}},
+		{name: "two flags", flags: []flag{f2, f1}},
+	}
+
+	for i, c := range cases {
+		cases[i].args = argsFromFlags("app", c.flags)
+	}
+
+	for _, c := range cases {
+
+		// Set up
+		reset()
+		pflags := pflag.NewFlagSet("TestUpdateChangedFlags"+c.name, pflag.PanicOnError)
+		registerAndBindFlags(c.flags, pflags)
+		pflags.Parse(c.args[1:])
+
+		// What we're testing
+		UpdateChangedFlags()
+
+		// Tests
+		t.Run(c.name, func(t *testing.T) {
+
+			for _, f := range c.flags {
+				if bf, ok := bbm[f.bk]; ok {
+					if bf.value != f.fv {
+						t.Errorf("BindValue for BindKey %q and FlagKey %q is inncorrect. Expected %#v, Got: %#v",
+							f.bk, f.fk, f.fv, bf.value)
+					}
+				} else {
+					t.Errorf("Expected a BindFlag for bind key %q, and didn't find it in the BindFlags", f.bk)
+				}
+			}
+		})
+	}
+
+}
+
+func TestAPI(t *testing.T) {
+
+	type flag struct {
+		fk string // flag key
+		fd string // flag default value
+		bk string // bind key
+		ev string // flag execpted bind value.
+	}
+	type icom struct {
+		args []string // args for parse string.
+		e    []flag   // flags expected values
+	}
+
+	type tc struct {
+		name  string // name of test case
+		flags []flag // flags for definition and binding at top.
+		app   icom   // application command
+		e     []flag // application expected values for each flag.
+		icoms []icom // interactive commands
+	}
+
+	cases := []tc{
+		{ // one
+			name: "one app command",
+			flags: []flag{
+				{fk: "config", bk: "configFile", fd: "config.yaml"},
+			},
+			app: icom{
+				args: []string{"app", "--config", "config.json"},
+				e:    []flag{{fk: "config", bk: "configFile", ev: "config.json"}},
+			},
+		},
+		{ // two
+			name: "one app, two interactive commands",
+			flags: []flag{
+				{fk: "config", bk: "configFile", fd: "config.yaml"},
+				{fk: "file", bk: "filename", fd: "somefile"},
+				{fk: "conn", bk: "connection", fd: "defaultconn"},
+			},
+			app: icom{
+				args: []string{"app", "--config", "config.json"},
+				e:    []flag{{fk: "config", bk: "configFile", fd: "config.yaml", ev: "config.json"}},
+			},
+			icoms: []icom{
+				{ // 1
+					args: []string{"interactive", "--file", "afile.ext"},
+					e:    []flag{{fk: "file", bk: "filename", fd: "somefile", ev: "afile.ext"}},
+				},
+				{ // 2
+					args: []string{"interactive", "--file", "afile.ext", "--conn", "myconn"},
+					e: []flag{
+						{fk: "file", bk: "filename", fd: "somefile", ev: "afile.ext"},
+						{fk: "conn", bk: "connection", fd: "defaultconn", ev: "myconn"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+
+		// Set up
+		reset()
+		SetDebug(true) // this gets the coverage number up. It's a bit gratuitous, though it probably guards against certain panics.
+
+		pflags := pflag.NewFlagSet("TestAPI-"+c.name, pflag.PanicOnError)
+		for _, f := range c.flags {
+			pflags.String(f.fk, f.fd, "")
+			Bind(f.bk, pflags.Lookup(f.fk))
+		}
+
+		// Application level parse.
+		pflags.Parse(c.app.args[1:])
+		t.Run(c.name, func(t *testing.T) {
+
+			// Capture the application flag and apply them to vipier.
+			UpdateChangedFlags()
+			Apply()
+
+			// Make sure the right viper variables are set.
+			for _, f := range c.app.e {
+				v := viper.GetString(f.bk)
+				if v != f.ev {
+					t.Errorf("Viper value is not what is expected. Expected: %q, Got: %q", f.ev, v)
+				}
+			}
+
+			for _, ic := range c.icoms {
+				pflags.Parse(ic.args[1:])
+
+				// Get values just for this run, and check flags.
+				ApplyFromFlags(pflags)
+				for _, f := range ic.e {
+					v := viper.GetString(f.bk)
+					e := f.ev
+					if v != e {
+						t.Errorf("Viper value is not what is expected. Expected: %q, Got: %q\n", e, v)
+					}
+				}
+
+				// Reset to bound values or default if empty (as in this case).
+				Apply()
+				for _, f := range ic.e {
+					v := viper.GetString(f.bk)
+					e := f.fd
+					// e := ""
+					if v != e {
+						t.Errorf("Viper value is not what is expected. Expected: %q, Got: %q\n", e, v)
+					}
+				}
+
+			}
+		})
+	}
 }

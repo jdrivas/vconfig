@@ -17,10 +17,6 @@ type BindFlag struct {
 }
 type bindMap map[string]*BindFlag
 
-func (bf *BindFlag) SetValueFrom(f *pflag.Flag) {
-	bf.value = flagValue(f)
-}
-
 var bfm = make(bindMap) // Keyed by flag
 var bbm = make(bindMap) // keyed by binding
 
@@ -35,23 +31,36 @@ func Bind(bk string, f *pflag.Flag) (bf *BindFlag) {
 		pef()
 		defer pxf()
 	}
-	// func Bind(bk string, fk string) (bf *BindFlag) {
+
 	// Always do both maps.
-	// Don't do anything if the key is already there.
-	if _, ok := bfm[f.Name]; !ok {
-		if _, ok := bbm[bk]; !ok {
+	// Create a new key if both have no values in the maps.
+	// Else update the key that was found.
+	var ok bool
+	if bf, ok = bfm[f.Name]; !ok {
+		if bf, ok = bbm[bk]; !ok { // Neither have been set
 			if Debug() {
 				fmt.Printf("New binding: %#v\n", bk)
 			}
-			bf := new(BindFlag)
-			bf.BindKey = bk
-			bf.Flag = f
-			// f := pflag.Lookup(fk)
-			bf = &BindFlag{BindKey: bk, Flag: f}
-			bfm[f.Name] = bf
-			bbm[bk] = bf
+			bf = new(BindFlag)
+		} else { // Out of Sync: bfm not set, bbm set.
+			if Debug() {
+				fmt.Printf("BindMaps are out of sync: keyed by flag missing, keyed by bind found: %#v\n",
+					bf)
+			}
 		}
-	} // Should we panic if these get out of sync?
+	} else if _, ok := bbm[bk]; !ok { // Out of Sync: bfm set, bbm not set.
+		if Debug() {
+			fmt.Printf("BindMaps are out of sync: keyed by flag found, keyed by binding missing: %#v\n",
+				bf)
+		}
+	}
+
+	// Always do BOTH maps.
+	bf.BindKey = bk
+	bf.Flag = f
+	bfm[f.Name] = bf
+	bbm[bk] = bf
+
 	return bf
 }
 
@@ -63,11 +72,6 @@ func GetBindFlags() (bfs []*BindFlag) {
 	return bfs
 }
 
-// GetBindFlagFor return BindFlag for the flag key.
-func GetBindFlagFor(fk string) *BindFlag {
-	return bfm[fk]
-}
-
 // Set will set the viper variable and keep the
 // value for later application during Apply.
 func Set(bk string, value interface{}) {
@@ -75,6 +79,27 @@ func Set(bk string, value interface{}) {
 		bf.value = value
 	}
 	viper.Set(bk, value)
+}
+
+// UpdateChangedFlags will look at each binding
+// and if the associated flag has changed, udpate the bind value.
+// This is intended to be used to capture values to bind to viper
+// right after a parse of flags has acurred. You might then
+// immediately call Apply() to cause the viper variables to take this new value.
+// This is different behavior than ApplyFromFlags.
+func UpdateChangedFlags() {
+	if Debug() {
+		pef()
+		defer pxf()
+	}
+	for _, bf := range GetBindFlags() {
+		if bf.Flag.Changed {
+			if Debug() {
+				fmt.Printf("Flag changed %q, setting bind value to: %q\n", bf.Flag.Name, bf.Flag.Value.String())
+			}
+			bf.setValueFrom(bf.Flag)
+		}
+	}
 }
 
 // Apply will set the viper variable with BindKey to the Value if
@@ -151,6 +176,17 @@ func ApplyFromFlags(pflags *pflag.FlagSet) {
 func ResetBindings() {
 	bfm = make(bindMap)
 	bbm = make(bindMap)
+}
+
+// GetBindFlagFor return BindFlag for the flag key.
+func getBindFlagFor(fk string) *BindFlag {
+	return bfm[fk]
+}
+
+// SetValueFrom sets the VindFLag value from a pfFlag.
+// a flag.
+func (bf *BindFlag) setValueFrom(f *pflag.Flag) {
+	bf.value = flagValue(f)
 }
 
 // This is gratuitous and only used in test.
