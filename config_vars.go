@@ -8,11 +8,13 @@ package vconfig
 
 // YAML Variables which show up in viper, but managed here.
 
-// These are top level variables in, say, a YAML file.
-// e.g. debug = true
-// not:
-// vconfig:
-//     debug: true
+/*
+ These are top level variables in, say, a YAML file.
+ e.g. debug = true
+ not:
+ vconfig:
+		 debug: true
+*/
 const (
 	DebugKey   = "debug"   // bool
 	VerboseKey = "verbose" // bool
