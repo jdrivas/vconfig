@@ -1,4 +1,7 @@
+// Copyright 2020 J. David Rivas
+
 package vconfig
+
 
 import (
 	"fmt"
